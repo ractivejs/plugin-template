@@ -1,0 +1,74 @@
+@font-face{ 
+	font-family: 'Voltaire';
+	src: url('fonts/Voltaire.eot');
+	src: url('fonts/Voltaire.eot?#iefix') format('embedded-opentype'),
+	     url('fonts/Voltaire.woff') format('woff'),
+	     url('fonts/Voltaire.ttf') format('truetype'),
+	     url('fonts/Voltaire.svg#webfont') format('svg');
+}
+
+body {
+	font-size: 16px;
+	color: #353535;
+	line-height: 1.5;
+	padding: 2em 1em 2em 1em;
+	font-family: 'Baskerville', 'Book Antiqua', 'Georgia';
+	width: 100%;
+	min-width: 32em;
+	max-width: 48em;
+	margin: 0 auto;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+h1, h2 {
+	font-family: 'Voltaire';
+}
+
+pre, code {
+	font-family: 'Source Code Pro', monospace;
+	border: 1px solid #eee;
+	border-radius: 0.2em;
+	background-color: rgb(249,252,246);;
+	color: #444;
+	font-weight: normal;
+	font-size: 0.8em;
+	padding: 0.15em 0.3em;
+	position: relative;
+}
+
+pre code{
+	font-size: 1em;
+	border: none;
+}
+
+.github {
+	padding: 1em;
+	background-color: #f9f9f9;
+	border-top: 1px solid #f4f4f4;
+	border-bottom: 1px solid #f4f4f4;
+	height: 3em;
+	text-align: center;
+}
+
+.github > span {
+	display: block;
+}
+
+a {
+	color: #729d34;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:visited {
+	color: #729d34;
+}
+
+.logo {
+	font-family: Voltaire;
+}

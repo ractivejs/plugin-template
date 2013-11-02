@@ -1,0 +1,12 @@
+{
+	"name": "{%= fullname %}",
+	"version": "0.1.0",
+	"author": "{%= author_name %}",
+	"main": "{%= Fullname %}.js",
+	"ignore": [
+		"**/.*",
+		"src",
+		"test",
+		"Gruntfile.js"
+	]
+}

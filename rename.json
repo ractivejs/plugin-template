@@ -1,0 +1,4 @@
+{
+	"gitignore": ".gitignore",
+	"src/Ractive-type-name.js": "src/{%= Fullname %}.js"
+}
