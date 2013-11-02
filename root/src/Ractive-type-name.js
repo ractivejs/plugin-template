@@ -22,13 +22,9 @@
 
 	Or, if you're using a module loader, require this module:
 
-	    define( function ( require ) {
-	      var Ractive = require( 'Ractive' );
-
-	      // requiring the plugin will 'activate' it - no need to use
-	      // the return value
-	      require( '{%= Fullname %}' );
-	    });
+	    // requiring the plugin will 'activate' it - no need to use
+	    // the return value
+	    require( '{%= Fullname %}' );
 
 	<< more specific instructions for this plugin go here... >>
 

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang='en-GB'>
+<head>
+	<meta charset='utf-8'>
+	<title>{%= Fullname %}</title>
+
+	<!-- CSS -->
+	<link href='http://fonts.googleapis.com/css?family=Voltaire' rel='stylesheet' type='text/css'>
+	<link rel='stylesheet' href='demo/main.css'>
+	<link rel='stylesheet' href='demo/prettyprint.css'>
+</head>
+
+<body>
+	<!-- if the project is on GitHub, add a fork me button! -->
+	<a class='forkme' href='https://github.com/you/repo'>Fork me on GitHub</a>
+
+	<header>
+		<h1>{%= Fullname %}</h1>
+		<span>find more plugins at <a href='http://ractivejs.org/plugins'>ractivejs.org/plugins</a></span>
+	</header>
+
+	<main>
+		<p>a description of the plugin goes here, plus a download link...</p>
+
+		<div id='demo'></div>
+
+		<pre id='demo-template-view' class='prettyprint lang-html'></pre>
+		<pre id='demo-code-view' class='prettyprint lang-js'></pre>
+	</main>
+
+	<!-- add additional info such as your homepage here, if you want -->
+	<footer>
+		<p>Copyright &copy; {%= grunt.template.today('yyyy') %} {%= author_name %}. Licensed {%= licenses %}</p>
+	</footer>
+
+	<!-- Demo template -->
+	<script id='demo-template' type='text/ractive'>
+		<p>This is a demo of the plugin</p>
+	</script>
+
+	<!-- Dependencies -->
+	<script src='lib/Ractive-legacy.js'></script>
+	<script src='Ractive-transitions-blah.js'></script>
+
+	<!-- Demo code -->
+	<script id='demo-code'>
+		ractive = new Ractive({
+			el: 'demo',
+			template: '#demo-template'
+		});
+	</script>
+
+	<!-- Insert code into the page -->
+	<script src='demo/prettify.js'></script>
+	<script src='demo/demo.js'></script>
+</body>
+</html>
