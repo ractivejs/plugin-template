@@ -47,12 +47,15 @@
 
 			// then see how indented this line is
 			match = ws.exec( line );
-			indent = match ? match[0].length : 0;
 
-			if ( minIndent === undefined ) {
-				minIndent = indent;
-			} else {
-				minIndent = Math.min( minIndent, indent );
+			if ( match && !onlyWhitespace.test( line ) ) {
+				indent = match[0].length;
+
+				if ( minIndent === undefined ) {
+					minIndent = indent;
+				} else {
+					minIndent = Math.min( minIndent, indent );
+				}
 			}
 			
 			return line;
@@ -68,8 +71,8 @@
 	code = deindent( q( '#demo-code' ).innerHTML );
 
 	// insert demo code into the page
-	q( '#demo-template-view' ).innerText = template;
-	q( '#demo-code-view' ).innerText = code;
+	q( '#demo-template-view' ).textContent = template;
+	q( '#demo-code-view' ).textContent = code;
 
 	// activate prettify.js
 	prettyPrint();

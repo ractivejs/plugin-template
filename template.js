@@ -22,17 +22,18 @@
 		
 
 		types = {
-			a: 'adaptors',
-			d: 'decorators',
-			e: 'events',
-			t: 'transitions'
+			a: { singular: 'adaptor', plural: 'adaptors' },
+			d: { singular: 'decorator', plural: 'decorators' },
+			e: { singular: 'event', plural: 'events' },
+			t: { singular: 'transition', plural: 'transitions' }
 		};
 
 		complete = function ( err, props ) {
 			var files;
 
-			props.fullname = 'ractive-' + type + '-' + props.name;
-			props.Fullname = 'Ractive-' + type + '-' + props.name;
+			props.fullname = 'ractive-' + type.plural + '-' + props.name;
+			props.Fullname = 'Ractive-' + type.plural + '-' + props.name;
+			props.type = type.singular;
 
 			files = init.filesToCopy( props );
 			init.addLicenseFiles(files, props.licenses);

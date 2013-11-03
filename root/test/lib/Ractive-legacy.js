@@ -1,4 +1,4 @@
-/*! Ractive - v0.3.8-pre - 2013-11-02
+/*! Ractive - v0.3.7 - 2013-10-30
 * Next-generation DOM manipulation
 
 * http://ractivejs.org
@@ -11,7 +11,7 @@
 var Ractive,
 
 // current version
-VERSION = '0.3.8-pre',
+VERSION = '0.3.7',
 
 doc = global.document || null,
 
@@ -111,8 +111,6 @@ initFragment,
 updateSection,
 
 animationCollection,
-
-voidElementNames = 'area base br col command doctype embed hr img input keygen link meta param source track wbr'.split( ' ' ),
 
 
 // parser and tokenizer
@@ -254,6 +252,36 @@ try {
 
 
 
+var hyphenate = function ( str ) {
+	return str.replace( /[A-Z]/g, function ( match ) {
+		return '-' + match.toLowerCase();
+	});
+};
+
+// determine some facts about our environment
+var cssTransitionsEnabled, transition, transitionend;
+
+(function () {
+
+	if ( !doc ) {
+		return;
+	}
+
+	if ( testDiv.style.transition !== undefined ) {
+		transition = 'transition';
+		transitionend = 'transitionend';
+		cssTransitionsEnabled = true;
+	} else if ( testDiv.style.webkitTransition !== undefined ) {
+		transition = 'webkitTransition';
+		transitionend = 'webkitTransitionEnd';
+		cssTransitionsEnabled = true;
+	} else {
+		cssTransitionsEnabled = false;
+	}
+
+}());
+
+
 // Internet Explorer derp. Methods that should be attached to Node.prototype
 // are instead attached to HTMLElement.prototype, which means SVG elements
 // can't use them. Remember kids, friends don't let friends use IE.
@@ -274,7 +302,7 @@ if ( global.Node && !global.Node.prototype.contains && global.HTMLElement && glo
 		Date.now = function () { return +new Date(); };
 	}
 
-	if ( !doc.createElementNS ) {
+	if ( doc && !doc.createElementNS ) {
 		doc.createElementNS = function ( ns, type ) {
 			if ( ns && ns !== 'http://www.w3.org/1999/xhtml' ) {
 				throw 'This browser does not support namespaces other than http://www.w3.org/1999/xhtml';
@@ -401,8 +429,6 @@ if ( global.Node && !global.Node.prototype.contains && global.HTMLElement && glo
 		};
 	}
 
-
-
 	// https://gist.github.com/Rich-Harris/6010282 via https://gist.github.com/jonathantneal/2869388
 	// addEventListener polyfill IE6+
 	if ( !win.addEventListener ) {
@@ -489,80 +515,6 @@ if ( global.Node && !global.Node.prototype.contains && global.HTMLElement && glo
 			}
 		}( win, doc ));
 	}
-
-
-	// https://github.com/jonathantneal/Polyfills-for-IE8/blob/master/getComputedStyle.js
-	!('getComputedStyle' in global) && (global.getComputedStyle = (function () {
-		function getPixelSize(element, style, property, fontSize) {
-			var
-			sizeWithSuffix = style[property],
-			size = parseFloat(sizeWithSuffix),
-			suffix = sizeWithSuffix.split(/\d/)[0],
-			rootSize;
-
-			fontSize = fontSize != null ? fontSize : /%|em/.test(suffix) && element.parentElement ? getPixelSize(element.parentElement, element.parentElement.currentStyle, 'fontSize', null) : 16;
-			rootSize = property == 'fontSize' ? fontSize : /width/i.test(property) ? element.clientWidth : element.clientHeight;
-
-			return (suffix == 'em') ? size * fontSize : (suffix == 'in') ? size * 96 : (suffix == 'pt') ? size * 96 / 72 : (suffix == '%') ? size / 100 * rootSize : size;
-		}
-
-		function setShortStyleProperty(style, property) {
-			var
-			borderSuffix = property == 'border' ? 'Width' : '',
-			t = property + 'Top' + borderSuffix,
-			r = property + 'Right' + borderSuffix,
-			b = property + 'Bottom' + borderSuffix,
-			l = property + 'Left' + borderSuffix;
-
-			style[property] = (style[t] == style[r] == style[b] == style[l] ? [style[t]]
-			: style[t] == style[b] && style[l] == style[r] ? [style[t], style[r]]
-			: style[l] == style[r] ? [style[t], style[r], style[b]]
-			: [style[t], style[r], style[b], style[l]]).join(' ');
-		}
-
-		function CSSStyleDeclaration(element) {
-			var
-			currentStyle = element.currentStyle,
-			style = this,
-			fontSize = getPixelSize(element, currentStyle, 'fontSize', null);
-
-			for (property in currentStyle) {
-				if (/width|height|margin.|padding.|border.+W/.test(property) && style[property] !== 'auto') {
-					style[property] = getPixelSize(element, currentStyle, property, fontSize) + 'px';
-				} else if (property === 'styleFloat') {
-					style['float'] = currentStyle[property];
-				} else {
-					style[property] = currentStyle[property];
-				}
-			}
-
-			setShortStyleProperty(style, 'margin');
-			setShortStyleProperty(style, 'padding');
-			setShortStyleProperty(style, 'border');
-
-			style.fontSize = fontSize + 'px';
-
-			return style;
-		}
-
-		CSSStyleDeclaration.prototype = {
-			constructor: CSSStyleDeclaration,
-			getPropertyPriority: function () {},
-			getPropertyValue: function ( prop ) {
-				return this[prop] || '';
-			},
-			item: function () {},
-			removeProperty: function () {},
-			setProperty: function () {},
-			getPropertyCSSValue: function () {}
-		};
-
-		function getComputedStyle(element) {
-			return new CSSStyleDeclaration(element);
-		}
-
-		return getComputedStyle;
-	})());
 
 }( global ));
 
@@ -1519,375 +1471,44 @@ getElementNamespace = function ( descriptor, parentNode ) {
 	// otherwise, use the svg namespace if this is an svg element, or inherit namespace from parent
 	return ( descriptor.e.toLowerCase() === 'svg' ? namespaces.svg : parentNode.namespaceURI );
 };
-var Transition;
+executeTransition = function ( descriptor, root, owner, contextStack, isIntro ) {
+	var transitionName, transitionParams, fragment, transitionManager, transition;
 
-(function () {
-
-	'use strict';
-
-	var parseTransitionParams,
-
-		testStyle,
-		vendors,
-		vendorPattern,
-		prefix,
-		prefixCache,
-		hyphenate,
-		
-		CSS_TRANSITIONS_ENABLED,
-		TRANSITION,
-		TRANSITION_DURATION,
-		TRANSITION_PROPERTY,
-		TRANSITION_TIMING_FUNCTION,
-		TRANSITIONEND;
-
-	if ( !doc ) {
-		// not relevant server-side
+	if ( !root.transitionsEnabled ) {
 		return;
 	}
 
-	// determine some facts about our environment
-	(function () {
+	if ( typeof descriptor === 'string' ) {
+		transitionName = descriptor;
+	} else {
+		transitionName = descriptor.n;
 
-		if ( testDiv.style.transition !== undefined ) {
-			TRANSITION = 'transition';
-			TRANSITIONEND = 'transitionend';
-			CSS_TRANSITIONS_ENABLED = true;
-		} else if ( testDiv.style.webkitTransition !== undefined ) {
-			TRANSITION = 'webkitTransition';
-			TRANSITIONEND = 'webkitTransitionEnd';
-			CSS_TRANSITIONS_ENABLED = true;
-		} else {
-			CSS_TRANSITIONS_ENABLED = false;
+		if ( descriptor.a ) {
+			transitionParams = descriptor.a;
+		} else if ( descriptor.d ) {
+			fragment = new StringFragment({
+				descriptor:   descriptor.d,
+				root:         root,
+				owner:        owner,
+				contextStack: owner.parentFragment.contextStack
+			});
+
+			transitionParams = fragment.toJSON();
+			fragment.teardown();
 		}
-
-	}());
-
-	if ( TRANSITION ) {
-		TRANSITION_DURATION = TRANSITION + 'Duration';
-		TRANSITION_PROPERTY = TRANSITION + 'Property';
-		TRANSITION_TIMING_FUNCTION = TRANSITION + 'TimingFunction';
 	}
 
-	Transition = function ( descriptor, root, owner, contextStack, isIntro ) {
-		var fragment, params, prop;
+	transition = root.transitions[ transitionName ] || Ractive.transitions[ transitionName ];
 
-		this.root = root;
-		this.node = owner.node;
-		this.isIntro = isIntro;
+	if ( transition ) {
+		transitionManager = root._transitionManager;
 
-		// store original style attribute
-		this.originalStyle = this.node.getAttribute( 'style' );
-
-		if ( typeof descriptor === 'string' ) {
-			this.name = descriptor;
-		} else {
-			this.name = descriptor.n;
-
-			if ( descriptor.a ) {
-				params = descriptor.a;
-			} else if ( descriptor.d ) {
-				// TODO is there a way to interpret dynamic arguments without all the
-				// 'dependency thrashing'?
-				fragment = new StringFragment({
-					descriptor:   descriptor.d,
-					root:         root,
-					owner:        owner,
-					contextStack: owner.parentFragment.contextStack
-				});
-
-				params = fragment.toJSON();
-				fragment.teardown();
-			}
-		}
-
-		this._fn = root.transitions[ this.name ] || Ractive.transitions[ this.name ];
-		if ( !this._fn ) {
-			return;
-		}
-
-		// parse transition parameters
-		params = parseTransitionParams( params );
-
-		// TODO blacklist certain params
-		for ( prop in params ) {
-			if ( params.hasOwnProperty( prop ) ) {
-				this[ prop ] = params[ prop ];
-			}
-		}
-	};
-
-	Transition.prototype = {
-		init: function () {
-			if ( this._inited ) {
-				throw new Error( 'Cannot initialize a transition more than once' );
-			}
-
-			this._inited = true;
-			this._fn.call( this.root, this );
-		},
-
-		complete: function () {
-			this._manager.pop( this.node );
-			this.node._ractive.transition = null;
-		},
-
-		// TODO handle prefixed styles
-		getStyle: function ( props ) {
-			var computedStyle, styles, i, prop, value;
-
-			computedStyle = window.getComputedStyle( this.node );
-
-			if ( typeof props === 'string' ) {
-				value = computedStyle[ prefix( props ) ];
-				if ( value === '0px' ) {
-					value = 0;
-				}
-				return value;
-			}
-
-			if ( !isArray( props ) ) {
-				throw new Error( 'Transition#getStyle must be passed a string, or an array of strings representing CSS properties' );
-			}
-
-			styles = {};
-
-			i = props.length;
-			while ( i-- ) {
-				prop = props[i];
-				value = computedStyle[ prefix( prop ) ];
-				if ( value === '0px' ) {
-					value = 0;
-				}
-				styles[ prop ] = value;
-			}
-
-			return styles;
-		},
-
-		setStyle: function ( style, value ) {
-			var prop;
-
-			if ( typeof style === 'string' ) {
-				this.node.style[ prefix( style ) ] = value;
-			}
-
-			else {
-				for ( prop in style ) {
-					if ( style.hasOwnProperty( prop ) ) {
-						// TODO prefix
-						this.node.style[ prefix( prop ) ] = style[ prop ];
-					}
-				}
-			}
-			
-			return this;
-		},
-
-		animateStyle: function ( to ) {
-			var t = this, propertyNames, changedProperties, computedStyle, current, from, transitionEndHandler, i, prop;
-
-			// Get a list of the properties we're animating
-			propertyNames = Object.keys( to );
-			changedProperties = [];
-
-			// Store the current styles
-			computedStyle = window.getComputedStyle( t.node );
-
-			from = {};
-			i = propertyNames.length;
-			while ( i-- ) {
-				prop = propertyNames[i];
-				current = computedStyle[ prefix( prop ) ];
-
-				if ( current === '0px' ) {
-					current = 0;
-				}
-
-				// we need to know if we're actually changing anything
-				if ( current != to[ prop ] ) { // use != instead of !==, so we can compare strings with numbers
-					changedProperties[ changedProperties.length ] = prop;
-
-					// make the computed style explicit, so we can animate where
-					// e.g. height='auto'
-					t.node.style[ prefix( prop ) ] = current;
-				}
-			}
-
-			// If we're not actually changing anything, the transitionend event
-			// will never fire! So we complete early
-			if ( !changedProperties.length ) {
-				t.resetStyle();
-				t.complete();
-				return;
-			}
-
-			// Wait a beat (otherwise the target styles will be applied immediately)
-			// TODO use a fastdom-style mechanism?
-			setTimeout( function () {
-
-				t.node.style[ TRANSITION_PROPERTY ] = propertyNames.map( prefix ).map( hyphenate ).join( ',' );
-				t.node.style[ TRANSITION_TIMING_FUNCTION ] = hyphenate( t.easing || 'linear' );
-				t.node.style[ TRANSITION_DURATION ] = ( t.duration / 1000 ) + 's';
-
-				transitionEndHandler = function () {
-					t.node.removeEventListener( TRANSITIONEND, transitionEndHandler, false );
-
-					// We've abused the style attribute - we need to revert
-					// it to it's natural state, if this is an intro
-					if ( t.isIntro ) {
-						t.resetStyle();
-					}
-
-					t.complete();
-				};
-				
-				t.node.addEventListener( TRANSITIONEND, transitionEndHandler, false );
-
-				setTimeout( function () {
-					var i = changedProperties.length;
-					
-					while ( i-- ) {
-						prop = changedProperties[i];
-						t.node.style[ prefix( prop ) ] = to[ prop ];
-					}
-				}, 0 );
-			}, t.delay || 0 );
-		},
-
-		resetStyle: function () {
-			if ( this.originalStyle ) {
-				this.node.setAttribute( 'style', this.originalStyle );
-			} else {
-				
-				// Next line is necessary, to remove empty style attribute!
-				// See http://stackoverflow.com/a/7167553
-				this.node.getAttribute( 'style' );
-				this.node.removeAttribute( 'style' );
-			}
-		}
-	};
-
-	parseTransitionParams = function ( params ) {
-		if ( params === 'fast' ) {
-			return { duration: 200 };
-		}
-
-		if ( params === 'slow' ) {
-			return { duration: 600 };
-		}
-
-		if ( isNumeric( params ) ) {
-			return { duration: +params };
-		}
-
-		return params || {};
-	};
-
-	// get prefixed style attributes
-	testStyle = document.createElement( 'div' ).style;
-	vendors = [ 'o', 'ms', 'moz', 'webkit' ];
-	vendorPattern = new RegExp( '^(?:' + vendors.join( '|' ) + ')[A-Z]' );
-	prefixCache = {};
-
-	prefix = function ( prop ) {
-		var i, vendor, capped;
-
-		if ( !prefixCache[ prop ] ) {
-			if ( testStyle[ prop ] !== undefined ) {
-				prefixCache[ prop ] = prop;
-			}
-
-			else {
-				// test vendors...
-				capped = prop.charAt( 0 ).toUpperCase() + prop.substring( 1 );
-
-				i = vendors.length;
-				while ( i-- ) {
-					vendor = vendors[i];
-					if ( testStyle[ vendor + capped ] !== undefined ) {
-						prefixCache[ prop ] = vendor + capped;
-						break;
-					}
-				}
-			}
-		}
-
-		return prefixCache[ prop ];
-	};
-
-	hyphenate = function ( str ) {
-		var hyphenated;
-
-		if ( vendorPattern.test( str ) ) {
-			str = '-' + str;
-		}
-
-		hyphenated = str.replace( /[A-Z]/g, function ( match ) {
-			return '-' + match.toLowerCase();
-		});
-
-		return hyphenated;
-	};
-
-}());
-(function () {
-
-	var invoke;
-
-	if ( !doc ) {
-		// not relevant server-side
-		return;
+		transitionManager.push( owner.node );
+		transition.call( root, owner.node, function () {
+			transitionManager.pop( owner.node );
+		}, transitionParams, isIntro );
 	}
-
-	executeTransition = function ( descriptor, root, owner, contextStack, isIntro ) {
-		var transition,
-			node,
-			oldTransition,
-			gotEnterHandler,
-			completed;
-
-		if ( !root.transitionsEnabled ) {
-			return;
-		}
-
-		// get transition name, args and function
-		transition = new Transition( descriptor, root, owner, contextStack, isIntro );
-
-		if ( transition._fn ) {
-			// TODO remove this warning after a few versions. Also, change URL when repo switches owner
-			if ( transition._fn.length !== 1 ) {
-				console.warn( 'The transitions API has changed. See https://github.com/Rich-Harris/Ractive/wiki/Transitions for details' );
-			}
-
-			node = transition.node;
-			transition._manager = root._transitionManager;
-
-			// Existing transition (i.e. we're outroing before intro is complete)?
-			// End it prematurely
-			if ( oldTransition = node._ractive.transition ) {
-				oldTransition.complete();
-			}
-
-			node._ractive.transition = transition;
-
-			transition._manager.push( node );
-
-			if ( isIntro ) {
-				// we don't want to call the transition function until this node
-				// exists on the DOM
-				root._defTransitions.push( transition );
-			} else {
-				transition.init();
-			}
-		}
-	};
-
-	invoke = function ( handler ) {
-		handler();
-	};
-
-}());
+};
 getComponentConstructor = function ( root, name ) {
 	// TODO... write this properly!
 	return root.components[ name ];
@@ -2921,22 +2542,21 @@ var getItem;
 
 (function () {
 
-	var getText, getMustache, getElement, getComment;
+	var getText, getMustache, getElement;
 
 	getItem = function ( parser, preserveWhitespace ) {
-		var next = parser.next();
-
-		if ( !next ) {
+		if ( !parser.next() ) {
 			return null;
 		}
 
-		return getText( parser, next, preserveWhitespace )
-		    || getMustache( parser, next, preserveWhitespace )
-		    || getElement( parser, next, preserveWhitespace )
-		    || getComment( parser, next );
+		return getText( parser, preserveWhitespace )
+		    || getMustache( parser, preserveWhitespace )
+		    || getElement( parser, preserveWhitespace );
 	};
 
-	getText = function ( parser, next, preserveWhitespace ) {
+	getText = function ( parser, preserveWhitespace ) {
+		var next = parser.next();
+
 		if ( next.type === TEXT ) {
 			parser.pos += 1;
 			return new TextStub( next, preserveWhitespace );
@@ -2945,7 +2565,9 @@ var getItem;
 		return null;
 	};
 
-	getMustache = function ( parser, next, preserveWhitespace ) {
+	getMustache = function ( parser, preserveWhitespace ) {
+		var next = parser.next();
+
 		if ( next.type === MUSTACHE || next.type === TRIPLE ) {
 			if ( next.mustacheType === SECTION || next.mustacheType === INVERTED ) {
 				return new SectionStub( next, parser, preserveWhitespace );				
@@ -2957,8 +2579,8 @@ var getItem;
 		return null;
 	};
 
-	getElement = function ( parser, next, preserveWhitespace ) {
-		var stub;
+	getElement = function ( parser, preserveWhitespace ) {
+		var next = parser.next(), stub;
 
 		if ( next.type === TAG ) {
 			stub = new ElementStub( next, parser, preserveWhitespace );
@@ -2971,15 +2593,6 @@ var getItem;
 			}
 
 			return stub;
-		}
-
-		return null;
-	};
-
-	getComment = function ( parser, next ) {
-		if ( next.type === COMMENT ) {
-			parser.pos += 1;
-			return new CommentStub( next );
 		}
 
 		return null;
@@ -3748,9 +3361,8 @@ notifyMultipleDependants = function ( ractive, keypaths, onlyDirect ) {
 		}
 	}
 };
-// TODO can this be neatened up at all?
 processDeferredUpdates = function ( ractive ) {
-	var evaluator, attribute, keypath, transition;
+	var evaluator, attribute, keypath;
 
 	while ( ractive._defEvals.length ) {
 		 evaluator = ractive._defEvals.pop();
@@ -3777,10 +3389,6 @@ processDeferredUpdates = function ( ractive ) {
 
 	while ( ractive._defObservers.length ) {
 		ractive._defObservers.pop().update( true );
-	}
-
-	while ( ractive._defTransitions.length ) {
-		ractive._defTransitions.pop().init(); // TODO rename...
 	}
 };
 registerDependant = function ( dependant ) {
@@ -3835,11 +3443,11 @@ render = function ( ractive, options ) {
 		parentNode: el
 	});
 
+	processDeferredUpdates( ractive );
+
 	if ( el ) {
 		el.appendChild( ractive.fragment.docFrag );
 	}
-
-	processDeferredUpdates( ractive );
 
 	// transition manager has finished its work
 	ractive._transitionManager = null;
@@ -5636,14 +5244,13 @@ Ractive = function ( options ) {
 		// unresolved dependants
 		_pendingResolution: { value: [] },
 
-		// Create arrays for deferred attributes and evaluators etc
+		// Create arrays for deferred attributes and evaluators
 		_defAttrs: { value: [] },
 		_defEvals: { value: [] },
 		_defSelectValues: { value: [] },
 		_defCheckboxes: { value: [] },
 		_defRadios: { value: [] },
 		_defObservers: { value: [] },
-		_defTransitions: { value: [] },
 
 		// Keep a list of used evaluators, so we don't duplicate them
 		_evaluators: { value: createFromNull() },
@@ -5773,38 +5380,173 @@ Ractive = function ( options ) {
 
 (function () {
 
-	'use strict';
+	var getOriginalComputedStyles, setStyle, augment, makeTransition;
 
-	var fade, defaults;
+	// no point executing this code on the server
+	if ( !doc ) {
+		return;
+	}
 
-	defaults = {
-		duration: 300,
-		easing: 'linear'
+	getOriginalComputedStyles = function ( computedStyle, properties ) {
+		var original = {}, i;
+
+		i = properties.length;
+		while ( i-- ) {
+			original[ properties[i] ] = computedStyle[ properties[i] ];
+		}
+
+		return original;
 	};
 
-	fade = function ( t ) {
-		var targetOpacity;
+	setStyle = function ( node, properties, map, params ) {
+		var i = properties.length, prop;
 
-		if ( t.isIntro ) {
-			targetOpacity = ( t.to !== undefined ? t.to : t.getStyle( 'opacity' ) );
-			t.setStyle( 'opacity', 0 );
+		while ( i-- ) {
+			prop = properties[i];
+			if ( map && map[ prop ] ) {
+				if ( typeof map[ prop ] === 'function' ) {
+					node.style[ prop ] = map[ prop ]( params );
+				} else {
+					node.style[ prop ] = map[ prop ];
+				}
+			}
+
+			else {
+				node.style[ prop ] = 0;
+			}
+		}
+	};
+
+	augment = function ( target, source ) {
+		var key;
+
+		if ( !source ) {
+			return target;
 		}
 
-		// set defaults
-		if ( t.duration === undefined ) {
-			t.duration = defaults.duration;
+		for ( key in source ) {
+			if ( hasOwn.call( source, key ) ) {
+				target[ key ] = source[ key ];
+			}
 		}
 
-		if ( t.eaing === undefined ) {
-			t.easing = defaults.easing;
-		}
+		return target;
+	};
 
-		t.animateStyle({
-			opacity: t.isIntro ? targetOpacity : 0
+	if ( cssTransitionsEnabled ) {
+		makeTransition = function ( properties, defaults, outside, inside ) {
+			if ( typeof properties === 'string' ) {
+				properties = [ properties ];
+			}
+
+			return function ( node, complete, params, isIntro ) {
+				var transitionEndHandler,
+					computedStyle,
+					originalComputedStyles,
+					startTransition,
+					originalStyle,
+					duration,
+					delay,
+					start,
+					end,
+					positionStyle,
+					visibilityStyle;
+
+				params = parseTransitionParams( params );
+				
+				duration = params.duration || defaults.duration;
+				easing = hyphenate( params.easing || defaults.easing );
+				delay = params.delay || 0;
+
+				start = ( isIntro ? outside : inside );
+				end = ( isIntro ? inside : outside );
+
+				computedStyle = window.getComputedStyle( node );
+				originalStyle = node.getAttribute( 'style' );
+
+				// if this is an intro, we need to transition TO the original styles
+				if ( isIntro ) {
+					// hide, to avoid flashes
+					positionStyle = node.style.position;
+					visibilityStyle = node.style.visibility;
+					node.style.position = 'absolute';
+					node.style.visibility = 'hidden';
+
+					// we need to wait a beat before we can actually get values from computedStyle.
+					// Yeah, I know, WTF browsers
+					setTimeout( function () {
+						originalComputedStyles = getOriginalComputedStyles( computedStyle, properties );
+						
+						start = outside;
+						end = augment( originalComputedStyles, inside );
+
+						// starting style
+						node.style.position = positionStyle;
+						node.style.visibility = visibilityStyle;
+						
+						setStyle( node, properties, start, params );
+
+						setTimeout( startTransition, 0 );
+					}, delay );
+				}
+
+				// otherwise we need to transition FROM them
+				else {
+					setTimeout( function () {
+						originalComputedStyles = getOriginalComputedStyles( computedStyle, properties );
+
+						start = augment( originalComputedStyles, inside );
+						end = outside;
+
+						// ending style
+						setStyle( node, properties, start, params );
+
+						setTimeout( startTransition, 0 );
+					}, delay );
+				}
+
+				startTransition = function () {
+					node.style[ transition + 'Duration' ] = ( duration / 1000 ) + 's';
+					node.style[ transition + 'Properties' ] = properties.map( hyphenate ).join( ',' );
+					node.style[ transition + 'TimingFunction' ] = easing;
+
+					transitionEndHandler = function () {
+						node.removeEventListener( transitionend, transitionEndHandler, false );
+
+						if ( isIntro ) {
+							node.setAttribute( 'style', originalStyle || '' );
+						}
+
+						complete();
+					};
+					
+					node.addEventListener( transitionend, transitionEndHandler, false );
+
+					setStyle( node, properties, end, params );
+				};
+			};
+		};
+
+		transitions.slide = makeTransition([
+			'height',
+			'borderTopWidth',
+			'borderBottomWidth',
+			'paddingTop',
+			'paddingBottom',
+			'overflowY'
+		], { duration: 400, easing: 'easeInOut' }, { overflowY: 'hidden' }, { overflowY: 'hidden' });
+
+		transitions.fade = makeTransition( 'opacity', {
+			duration: 300,
+			easing: 'linear'
 		});
-	};
 
-	transitions.fade = fade;
+		transitions.fly = makeTransition([ 'opacity', 'left', 'position' ], {
+			duration: 400, easing: 'easeOut'
+		}, { position: 'relative', left: '-500px' }, { position: 'relative', left: 0 });
+	}
+
+	
 
 }());
 var parseTransitionParams = function ( params ) {
@@ -5824,30 +5566,29 @@ var parseTransitionParams = function ( params ) {
 };
 (function ( transitions ) {
 
-	var typewriter, typewriteNode, typewriteTextNode, props;
+	var typewriter, typewriteNode, typewriteTextNode;
 
 	if ( !doc ) {
 		return;
 	}
 
-	typewriteNode = function ( node, isIntro, complete, interval ) {
-		var children, next, method;
+	typewriteNode = function ( node, complete, interval ) {
+		var children, next;
 
-		if ( node.nodeType === 1 && isIntro ) {
+		if ( node.nodeType === 1 ) {
 			node.style.display = node._display;
 		}
 
 		if ( node.nodeType === 3 ) {
-			typewriteTextNode( node, isIntro, complete, interval );
+			typewriteTextNode( node, complete, interval );
 			return;
 		}
 
 		children = Array.prototype.slice.call( node.childNodes );
-		method = isIntro ? 'shift' : 'pop';
 
 		next = function () {
 			if ( !children.length ) {
-				if ( node.nodeType === 1 && isIntro ) {
+				if ( node.nodeType === 1 ) {
 					node.setAttribute( 'style', node._style || '' );
 				}
 
@@ -5855,17 +5596,17 @@ var parseTransitionParams = function ( params ) {
 				return;
 			}
 
-			typewriteNode( children[ method ](), isIntro, next, interval );
+			typewriteNode( children.shift(), next, interval );
 		};
 
 		next();
 	};
 
-	typewriteTextNode = function ( node, isIntro, complete, interval ) {
-		var str, len, loop, i, d, targetLen;
+	typewriteTextNode = function ( node, complete, interval ) {
+		var str, len, loop, i;
 
 		// text node
-		str = isIntro ? node._hiddenData : '' + node.data;
+		str = node._hiddenData;
 		len = str.length;
 
 		if ( !len ) {
@@ -5873,9 +5614,7 @@ var parseTransitionParams = function ( params ) {
 			return;
 		}
 
-		i = isIntro ? 0 : len;
-		d = isIntro ? 1 : -1;
-		targetLen = isIntro ? len : 0;
+		i = 0;
 
 		loop = setInterval( function () {
 			var substr, remaining, match, remainingNonWhitespace, filler;
@@ -5891,29 +5630,49 @@ var parseTransitionParams = function ( params ) {
 			filler = new Array( remainingNonWhitespace + 1 ).join( '\u00a0' );
 
 			node.data = substr + filler;
-			if ( i === targetLen ) {
+			if ( i === len ) {
 				clearInterval( loop );
 				delete node._hiddenData;
 				complete();
 			}
 
-			i += d;
+			i += 1;
 		}, interval );
 	};
 
-	props = [
-		'width',
-		'height',
-		'visibility'
-	];
-
 	// TODO differentiate between intro and outro
-	typewriter = function ( t ) {
-		var interval, style, currentStyle, hide;
+	typewriter = function ( node, complete, params ) {
+		var interval, style, computedStyle, hide;
 
-		interval = t.interval || ( t.speed ? 1000 / t.speed : ( t.duration ? t.node.textContent.length / t.duration : 4 ) );
+		params = parseTransitionParams( params );
+
+		interval = params.interval || ( params.speed ? 1000 / params.speed : ( params.duration ? node.textContent.length / params.duration : 4 ) );
 		
-		currentStyle = t.getStyle( props );
+		style = node.getAttribute( 'style' );
+		computedStyle = window.getComputedStyle( node );
+
+		node.style.visibility = 'hidden';
+
+		setTimeout( function () {
+			var computedHeight, computedWidth, computedVisibility;
+
+			computedWidth = computedStyle.width;
+			computedHeight = computedStyle.height;
+			computedVisibility = computedStyle.visibility;
+
+			hide( node );
+
+			setTimeout( function () {
+				node.style.width = computedWidth;
+				node.style.height = computedHeight;
+				node.style.visibility = 'visible';
+
+				typewriteNode( node, function () {
+					node.setAttribute( 'style', style || '' );
+					complete();
+				}, interval );
+			}, params.delay || 0 );
+		});
 
 		hide = function ( node ) {
 			var children, i;
@@ -5938,20 +5697,6 @@ var parseTransitionParams = function ( params ) {
 				hide( children[i] );
 			}
 		};
-
-		if ( t.isIntro ) {
-			hide( t.node );
-		}
-
-		setTimeout( function () {
-			// make style explicit...
-			t.setStyle( currentStyle );
-
-			typewriteNode( t.node, t.isIntro, function () {
-				t.resetStyle();
-				t.complete();
-			}, interval );
-		}, t.delay || 0 );
 	};
 
 	transitions.typewriter = typewriter;
@@ -6424,34 +6169,6 @@ var arrayContentsMatch = function ( a, b ) {
 	};
 
 }());
-// Plain text
-var DomComment = function ( options, docFrag ) {
-	this.type = COMMENT;
-	this.descriptor = options.descriptor;
-
-	if ( docFrag ) {
-		this.node = doc.createComment( options.descriptor.f );
-		this.parentNode = options.parentFragment.parentNode;
-
-		docFrag.appendChild( this.node );
-	}
-};
-
-DomComment.prototype = {
-	teardown: function ( detach ) {
-		if ( detach ) {
-			this.node.parentNode.removeChild( this.node );
-		}
-	},
-
-	firstNode: function () {
-		return this.node;
-	},
-
-	toString: function () {
-		return '<!--' + this.descriptor.f + '-->';
-	}
-};
 (function () {
 
 	var ComponentParameter;
@@ -6879,7 +6596,9 @@ DomElement.prototype = {
 	toString: function () {
 		var str, i, len;
 
-		str = '<' + ( this.descriptor.y ? '!doctype' : this.descriptor.e );
+		// TODO void tags
+		str = '' +
+			'<' + this.descriptor.e;
 
 		len = this.attributes.length;
 		for ( i=0; i<len; i+=1 ) {
@@ -6894,10 +6613,7 @@ DomElement.prototype = {
 			str += this.fragment.toString();
 		}
 
-		// add a closing tag if this isn't a void element
-		if ( voidElementNames.indexOf( this.descriptor.e ) === -1 ) {
-			str += '</' + this.descriptor.e + '>';
-		}
+		str += '</' + this.descriptor.e + '>';
 
 		return str;
 	},
@@ -6949,10 +6665,10 @@ DomFragment.prototype = {
 			case INTERPOLATOR: return new DomInterpolator( options, this.docFrag );
 			case SECTION:      return new DomSection( options, this.docFrag );
 			case TRIPLE:       return new DomTriple( options, this.docFrag );
+
 			case ELEMENT:      return new DomElement( options, this.docFrag );
 			case PARTIAL:      return new DomPartial( options, this.docFrag );
 			case COMPONENT:    return new DomComponent( options, this.docFrag );
-			case COMMENT:      return new DomComment( options, this.docFrag );
 
 			default: throw new Error( 'WTF? not sure what happened here...' );
 		}
@@ -7739,16 +7455,7 @@ makeTransitionManager = function ( root, callback ) {
 			transitionManager.active[ transitionManager.active.length ] = node;
 		},
 		pop: function ( node ) {
-			var index;
-
-			index = transitionManager.active.indexOf( node );
-
-			if ( index === -1 ) {
-				// already popped this node
-				return;
-			}
-
-			transitionManager.active.splice( index, 1 );
+			transitionManager.active.splice( transitionManager.active.indexOf( node ), 1 );
 			
 			detachNodes();
 
@@ -7788,27 +7495,12 @@ var normaliseKeypath;
 
 }());
 
-var CommentStub = function ( token ) {
-	this.content = token.content;
-};
-
-CommentStub.prototype = {
-	toJSON: function () {
-		return {
-			t: COMMENT,
-			f: this.content
-		};
-	},
-
-	toString: function () {
-		return '<!--' + this.content + '-->';
-	}
-};
 var ElementStub;
 
 (function () {
 
-	var allElementNames,
+	var voidElementNames,
+		allElementNames,
 		mapToLowerCase,
 		svgCamelCaseElements,
 		svgCamelCaseElementsMap,
@@ -7893,9 +7585,6 @@ var ElementStub;
 			}
 		}
 		
-		if ( firstToken.doctype ) {
-			this.doctype = true;
-		}
 
 		if ( firstToken.selfClosing ) {
 			this.selfClosing = true;
@@ -7986,10 +7675,6 @@ var ElementStub;
 					t: ELEMENT,
 					e: this.tag
 				};
-			}
-
-			if ( this.doctype ) {
-				json.y = 1;
 			}
 
 			if ( this.attributes && this.attributes.length ) {
@@ -8144,6 +7829,7 @@ var ElementStub;
 	};
 
 
+	voidElementNames = 'area base br col command embed hr img input keygen link meta param source track wbr'.split( ' ' );
 	allElementNames = 'a abbr acronym address applet area b base basefont bdo big blockquote body br button caption center cite code col colgroup dd del dfn dir div dl dt em fieldset font form frame frameset h1 h2 h3 h4 h5 h6 head hr html i iframe img input ins isindex kbd label legend li link map menu meta noframes noscript object ol p param pre q s samp script select small span strike strong style sub sup textarea title tt u ul var article aside audio bdi canvas command data datagrid datalist details embed eventsource figcaption figure footer header hgroup keygen mark meter nav output progress ruby rp rt section source summary time track video wbr'.split( ' ' );
 	closedByParentClose = 'li dd rt rp optgroup option tbody tfoot tr td th'.split( ' ' );
 
@@ -8764,34 +8450,6 @@ getFragmentStubFromTokens = function ( tokens, options, preserveWhitespace ) {
 
 	return stub;
 };
-var getComment;
-
-(function () {
-
-	getComment = function ( tokenizer ) {
-		var content, remaining, endIndex;
-
-		if ( !getStringMatch( tokenizer, '<!--' ) ) {
-			return null;
-		}
-
-		remaining = tokenizer.remaining();
-		endIndex = remaining.indexOf( '-->' );
-
-		if ( endIndex === -1 ) {
-			throw new Error( 'Unexpected end of input (expected "-->" to close comment)' );
-		}
-
-		content = remaining.substr( 0, endIndex );
-		tokenizer.pos += endIndex + 3;
-
-		return {
-			type: COMMENT,
-			content: content
-		};
-	};
-
-}());
 var getExpression;
 
 // expression
@@ -9727,10 +9385,6 @@ var getTag;
 			type: TAG
 		};
 
-		if ( getStringMatch( tokenizer, '!' ) ) {
-			tag.doctype = true;
-		}
-
 		// tag name
 		tag.name = getTagName( tokenizer );
 		if ( !tag.name ) {
@@ -9791,7 +9445,7 @@ var getTag;
 		return tag;
 	};
 
-	getTagName = getRegexMatcher( /^[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/ );
+	getTagName = getRegexMatcher( /^[a-zA-Z][a-zA-Z0-9\-]*/ );
 
 	getAttributes = function ( tokenizer ) {
 		var start, attrs, attr;
@@ -9984,7 +9638,6 @@ var getText = function ( tokenizer ) {
 };
 getToken = function ( tokenizer ) {
 	var token = getMustacheOrTriple( tokenizer ) ||
-	        getComment( tokenizer ) ||
 	        getTag( tokenizer ) ||
 	        getText( tokenizer );
 
@@ -10119,7 +9772,6 @@ var getUnescapedSingleQuotedChars = getRegexMatcher( /^[^\\']+/ );
 // * t1 - intro Transition
 // * t2 - outro Transition
 // * o - decOrator
-// * y - is doctYpe
 
 (function () {
 
@@ -10216,12 +9868,8 @@ tokenize = function ( template, options ) {
 
 	options = options || {};
 
-	if ( options.stripComments !== false ) {
-		template = stripHtmlComments( template );
-	}
-
 	tokenizer = {
-		str: template,
+		str: stripHtmlComments( template ),
 		pos: 0,
 		delimiters: options.delimiters || Ractive.delimiters,
 		tripleDelimiters: options.tripleDelimiters || Ractive.tripleDelimiters,

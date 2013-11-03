@@ -78,7 +78,7 @@ When you run the `grunt` command, Grunt will lint the plugin, run the tests, and
 Demoing your plugin
 -------------------
 
-There is also an `index.html` file in the project root, setup to make it easy to build a demo of your plugin. This is also useful for debugging during development.
+There is also an `index.html` file in the project root, setup to make it easy to build a demo of your plugin. This is also useful for debugging during development. It contains a number of blocks annotated with `TODO`.
 
 A nice trick is to create a `gh-pages` branch that mirrors your `master` branch - then, when you push the plugin repo to GitHub, other developers will be able to see the plugin in action by visiting http://you.github.io/the-plugin-repo.
 
