@@ -22,7 +22,7 @@ $ npm install -g grunt-init    # the project scaffolding module
 ### 2. Install this template as 'rvpl'
 
 ```shell
-$ git clone https://github.com/RactiveJS/Plugin-template ~/.grunt-init rvpl
+$ git clone https://github.com/RactiveJS/Plugin-template ~/.grunt-init/rvpl
 ```
 
 (You can of course use whatever name you like - I use `rvpl` because it's easy to type.)
