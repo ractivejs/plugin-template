@@ -19,7 +19,7 @@
 
 		var options, prompts, complete, type, types;
 
-		
+
 
 		types = {
 			a: { singular: 'adaptor', plural: 'adaptors' },
@@ -66,9 +66,10 @@
 				prompts = [
 					init.prompt( 'name' ),
 					init.prompt( 'author_name' ),
-					init.prompt( 'licenses' )
+					init.prompt( 'licenses' ),
+					init.prompt( 'repository' )
 				];
-				
+
 				init.process({}, prompts, complete );
 			}
 		});
