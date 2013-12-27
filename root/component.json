@@ -1,0 +1,14 @@
+{
+	"name": "{%= fullname %}",
+	"repo": "{%= repository %}",
+	"description": "{%= Fullname %}",
+	"version": "0.1.0",
+	"keywords": [],
+	"dependencies": {},
+	"development": {},
+	"license": "MIT",
+	"main": "{%= Fullname %}.js",
+	"scripts": [
+		"{%= Fullname %}.js"
+	]
+}
