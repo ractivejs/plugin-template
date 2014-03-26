@@ -22,7 +22,7 @@ $ npm install -g grunt-init    # the project scaffolding module
 ### 2. Install this template as 'rvpl'
 
 ```shell
-$ git clone https://github.com/RactiveJS/Plugin-template ~/.grunt-init/rvpl
+$ git clone https://github.com/ractivejs/plugin-template ~/.grunt-init/rvpl
 ```
 
 (You can of course use whatever name you like - I use `rvpl` because it's easy to type.)
@@ -40,7 +40,7 @@ $ cd myplugin
 $ grunt-init rvpl
 ```
 
-First, you will be asked what kind of plugin you're making. This is so that Grunt can set up your project with the standard naming convention: `Ractive-plugintype-pluginname`.
+First, you will be asked what kind of plugin you're making. This is so that Grunt can set up your project with the standard naming convention: `ractive-plugintype-pluginname`.
 
 Then, you will be prompted for the plugin name, your name, and a license. The plugin name will default to the folder name (e.g. `myplugin`), and your name will be guessed from your git config. (See [here](http://gruntjs.com/project-scaffolding#specifying-default-prompt-answers) for information on how to override the default.)
 
@@ -60,7 +60,7 @@ Building your plugin
 
 In the `src` folder is a single JavaScript file, with some placeholder comments for documentation. It's a good idea to fill this out with some basic usage instructions and whatever else other developers will need to know.
 
-There's also some universal module definition boilerplate, which will allow your plugin to be used with or without module systems such as [RequireJS](http://requirejs.org/) (or another AMD library such as [curl](https://github.com/cujojs/curl)) and [Browserify](http://browserify.org/). You don't need to worry about the UMD boilerplate unless your plugin has a third-party dependency, at which point things can get hairy (but more so for users of your plugin than you!). See the [Ractive-adaptors-Backbone](https://github.com/RactiveJS/Ractive-adaptors-Backbone) plugin for an example.
+There's also some universal module definition boilerplate, which will allow your plugin to be used with or without module systems such as [RequireJS](http://requirejs.org/) (or another AMD library such as [curl](https://github.com/cujojs/curl)) and [Browserify](http://browserify.org/). You don't need to worry about the UMD boilerplate unless your plugin has a third-party dependency, at which point things can get hairy (but more so for users of your plugin than you!). See the [ractive-adaptors-backbone](https://github.com/ractivejs/ractive-adaptors-backbone) plugin for an example.
 
 Each plugin type must adhere to a particular API. For documentation on the plugin APIs see [todo...!].
 

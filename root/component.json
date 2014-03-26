@@ -1,14 +1,16 @@
 {
 	"name": "{%= fullname %}",
 	"repo": "{%= repository %}",
-	"description": "{%= Fullname %}",
+	"description": "{%= fullname %}",
 	"version": "0.1.0",
 	"keywords": [],
-	"dependencies": {},
+	"dependencies": {
+		"ractivejs/ractive": "~0.4.0"
+	},
 	"development": {},
 	"license": "MIT",
-	"main": "{%= Fullname %}.js",
+	"main": "{%= fullname %}.js",
 	"scripts": [
-		"{%= Fullname %}.js"
+		"{%= fullname %}.js"
 	]
 }

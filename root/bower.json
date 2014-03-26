@@ -2,7 +2,10 @@
 	"name": "{%= fullname %}",
 	"version": "0.1.0",
 	"author": "{%= author_name %}",
-	"main": "{%= Fullname %}.js",
+	"main": "{%= fullname %}.js",
+	"dependencies": {
+		"ractivejs/ractive": "~0.4.0"
+	},
 	"ignore": [
 		"**/.*",
 		"src",

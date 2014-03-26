@@ -9,7 +9,7 @@
 	exports.description = 'Create a new Ractive.js plugin';
 
 	// Template-specific notes to be displayed before question prompts.
-	exports.after = 'Now, install project dependencies with _npm install_ (or _npm install --no-registry_ to install modules from cache, which may be much faster). This will download grunt and the plugins this project uses. For further instructions do _cat README.md_';
+	exports.after = 'Now, install project dependencies with _npm install_ (or _npm install --no-registry_ to install modules from cache, which may be much faster). This will download grunt and the plugins this project uses during development. For further instructions do _cat README.md_';
 
 	// Any existing file or directory matching this wildcard will cause a warning.
 	exports.warnOn = '*';
@@ -32,7 +32,6 @@
 			var files;
 
 			props.fullname = 'ractive-' + type.plural + '-' + props.name;
-			props.Fullname = 'Ractive-' + type.plural + '-' + props.name;
 			props.type = type.singular;
 
 			files = init.filesToCopy( props );

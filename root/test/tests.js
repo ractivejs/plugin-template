@@ -1,5 +1,5 @@
-// {%= Fullname %} tests
-// {%= Fullname.replace(/./g,'=') %}
+// {%= fullname %} tests
+// {%= fullname.replace(/./g,'=') %}
 
 (function () {
 
