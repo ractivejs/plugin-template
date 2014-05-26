@@ -4,12 +4,18 @@
 	"author": "{%= author_name %}",
 	"main": "{%= fullname %}.js",
 	"dependencies": {
-		"ractivejs/ractive": "~0.4.0"
+		"ractive": "~0.4.0"
 	},
 	"ignore": [
-		"**/.*",
+		".*",
+		"*.json",
+		"demo",
+		"grunt",
+		"node_modules",
 		"src",
 		"test",
-		"Gruntfile.js"
+		"Gruntfile.js",
+		"index.html",
+		"README.md"
 	]
 }

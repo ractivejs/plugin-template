@@ -1,6 +1,6 @@
 module.exports = {
 	bundle: {
-		src: 'tmp/{%= fullname %}.js',
-		dest: 'tmp/{%= fullname %}.min.js'
+		src: 'tmp/<%= pkg.name %>.js',
+		dest: 'tmp/<%= pkg.name %>.min.js'
 	}
 };

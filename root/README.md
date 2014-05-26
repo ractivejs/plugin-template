@@ -1,12 +1,10 @@
-Ractive.js {%= name %} {%= type %} plugin
-==========={%= name.replace(/./g,'=') %}={%= type.replace(/./g,'=') %}=======
+# Ractive.js {%= name %} {%= type %} plugin
 
 *Find more Ractive.js plugins at [ractivejs.org/plugins](http://ractivejs.org/plugins)*
 
 [See the demo here.](TODO)
 
-Usage
------
+## Usage
 
 Include this file on your page below Ractive, e.g:
 
@@ -26,8 +24,7 @@ require( '{%= fullname %}' );
 
 
 
-License
--------
+## License
 
 Copyright (c) {%= grunt.template.today('yyyy') %} {%= author_name %}. Licensed {%= licenses %}
 

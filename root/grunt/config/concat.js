@@ -1,7 +1,7 @@
 module.exports = {
 	bundle: {
-		src: 'src/{%= fullname %}.js',
-		dest: 'tmp/{%= fullname %}.js'
+		src: 'src/<%= pkg.name %>.js',
+		dest: 'tmp/<%= pkg.name %>.js'
 	},
 	options: {
 		process: true

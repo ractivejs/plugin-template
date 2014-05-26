@@ -7,6 +7,8 @@ module.exports = function ( grunt ) {
 
     var config, dependency;
 
+    require( 'jit-grunt' )( grunt );
+
     config = {
         pkg: grunt.file.readJSON( 'package.json' )
     };

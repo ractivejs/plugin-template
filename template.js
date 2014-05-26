@@ -9,7 +9,8 @@
 	exports.description = 'Create a new Ractive.js plugin';
 
 	// Template-specific notes to be displayed before question prompts.
-	exports.after = 'Now, install project dependencies with _npm install_ (or _npm install --no-registry_ to install modules from cache, which may be much faster). This will download grunt and the plugins this project uses during development. For further instructions do _cat README.md_';
+	exports.after = 'Now, install project dependencies with _npm i_ (or _npm i --no-registry_ to install modules from cache, which may be much faster). This will download grunt and the plugins this project uses during development.\n\n' +
+	 'Run _bower i_ to install the latest version of Ractive.js to the vendor folder, for demoing and testing your plugin.'
 
 	// Any existing file or directory matching this wildcard will cause a warning.
 	exports.warnOn = '*';
