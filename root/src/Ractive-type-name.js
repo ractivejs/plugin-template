@@ -34,14 +34,14 @@
 
 	'use strict';
 
-	// Common JS (i.e. browserify) environment
-	if ( typeof module !== 'undefined' && module.exports && typeof require === 'function' ) {
-		factory( require( 'ractive' ) );
+	// AMD environment
+	if ( typeof define === 'function' && define.amd ) {
+		define([ 'ractive' ], factory );
 	}
 
-	// AMD?
-	else if ( typeof define === 'function' && define.amd ) {
-		define([ 'ractive' ], factory );
+	// Common JS (i.e. node/browserify)
+	else if ( typeof module !== 'undefined' && module.exports && typeof require === 'function' ) {
+		factory( require( 'ractive' ) );
 	}
 
 	// browser global
