@@ -4,7 +4,7 @@
 	"author": "{%= author_name %}",
 	"main": "{%= fullname %}.js",
 	"dependencies": {
-		"ractive": "~0.4.0"
+		"ractive": "^0.5.4"
 	},
 	"ignore": [
 		".*",
