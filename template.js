@@ -24,6 +24,7 @@
 
 		types = {
 			a: { singular: 'adaptor', plural: 'adaptors' },
+			c: { singular: 'component', plural: 'components' },
 			d: { singular: 'decorator', plural: 'decorators' },
 			e: { singular: 'event', plural: 'events' },
 			t: { singular: 'transition', plural: 'transitions' }
@@ -44,6 +45,7 @@
 
 		process.stdout.write( 'What type of plugin?\n  ' +
 			'a'.underline.bold + 'daptor\n  ' +
+			'c'.underline.bold + 'omponent\n  ' +
 			'd'.underline.bold + 'ecorator\n  ' +
 			'e'.underline.bold + 'vent\n  ' +
 			't'.underline.bold + 'ransition' );
